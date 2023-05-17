@@ -12,9 +12,13 @@
 -fno-ipa-pure-const
 
 // Turn off AbendInfo option default is on. Use to disable w/o doing a lot of edits.
-// -DOPTION_ABENDINFO=0
+// -DABENDINFO_OPTION=0
+
+// Very small reduction in code - removes printing from custom_crash_callback
+// -DABENDINFO_POSTMORTEM_EXTRA=0
 
 
+-DUMM_STATS_FULL=1
 */
 
 /*@create-file:build.opt:debug@

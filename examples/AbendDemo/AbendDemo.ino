@@ -11,7 +11,6 @@
 
 void processKey(Print& out, int hotKey);
 
-
 void setup(void) {
   // Patch some common unhandled exception which lead to WDT resets.
   abendHandlerInstall();
@@ -27,8 +26,8 @@ void setup(void) {
   processKey(Serial, '?');
 }
 
-
 void loop(void) {
+  abendIsHeapOK();        // optional
   if (Serial.available() > 0) {
     int hotKey = Serial.read();
     processKey(Serial, hotKey);

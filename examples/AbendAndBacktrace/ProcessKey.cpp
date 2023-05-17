@@ -1,6 +1,6 @@
 #include <interrupts.h>
 #include <esp8266_undocumented.h>
-//#include <BacktraceLog.h>
+#include <umm_malloc/umm_malloc.h>
 
 #ifndef DEBUG_ESP_BACKTRACELOG_LEAF_FUNCTION
 #define DEBUG_ESP_BACKTRACELOG_LEAF_FUNCTION(...) __asm__ __volatile__("" ::: "a0", "memory")
@@ -54,6 +54,8 @@ void processKey(Print& out, int hotKey) {
     case 'v':
       out.println(F("Print Exception Table Vectors"));
       printCauseTable();
+      out.printf(PSTR("\nputc1: %08x\n"), *(uint32_t*)0x3fffdd48u);
+      out.printf(PSTR("\nputc2: %08x\n"), *(uint32_t*)0x3fffdd4cu);
       break;
     // case 'u':
     //   out.println(F("Patch Exception 20 handler using Exception 0 handler"));
@@ -80,7 +82,7 @@ void processKey(Print& out, int hotKey) {
       break;
     case 'S':
       out.printf_P(PSTR("Now crashing with Software WDT. This will take about 3 seconds.\r\n"));
-      ets_printf("\nEmulate typical SDK deliberate infinite loop.\n");
+      ets_printf("Emulate typical SDK deliberate infinite loop.\n");
       while (true) {}
       break;
     case 'h':
@@ -106,7 +108,7 @@ void processKey(Print& out, int hotKey) {
       out.printf_P(PSTR("Now crashing with Hardware WDT. This will take about 6 seconds.\r\n"));
       {
         xt_rsil(15); // Block Soft WDT
-        ets_printf("\nEmulate typical SDK deliberate infinite loop w/Interrupts off.\n");
+        ets_printf("Emulate typical SDK deliberate infinite loop w/Interrupts off.\r\n");
         while (true) {}
       }
       break;
@@ -211,6 +213,16 @@ void processKey(Print& out, int hotKey) {
       out.println(F("Execute an illegal instruction."));
       __asm__ __volatile__("ill\n\t"::: "memory");
       break;
+    case 'o': {
+        out.println(F("Bump Heap OOM counter"));
+        void* pc = malloc(128*1024u);
+        if (pc) {
+          free(pc);
+          out.println(F("Heap OOM counter bumped"));
+        }
+        out.printf(PSTR("Heap OOM count: %u\r\n"), umm_get_oom_count());
+      }
+      break;
     case '0':
       out.println(F("Crashing at an embedded 'break 1, 15' instruction that was generated"));
       out.println(F("by the compiler after detecting a divide by zero."));
@@ -226,6 +238,7 @@ void processKey(Print& out, int hotKey) {
           The compiler detected a divide by zero at build time. It embeded a break 1,15 and didn't finish
           compiling the remainder of this case. With INTLEVEL at 2, xtensa will
           ignore the break 1,15 and execution falls through to the next case. :(
+          Or worse, unexpectedly crashes with unusual exceptions.
         */
         {out.printf_P(PSTR("This should not print %d\n"), divideA_B_bp(1, 0));}
         xt_wsr_ps(save_ps);
@@ -243,6 +256,7 @@ void processKey(Print& out, int hotKey) {
       out.println();
       out.println(F("Press a key + <enter>"));
       out.println(F("  v    - Print Exception Table Vectors"));
+      out.println(F("  o    - Bump Heap OOM counter"));
       // out.println(F("  u    - Install Exception 20 patch"));
       out.println(F("  r    - Reset, ESP.reset();"));
       out.println(F("  t    - Restart, ESP.restart();"));
@@ -257,7 +271,7 @@ void processKey(Print& out, int hotKey) {
       out.println(F("  W    - Hardware WDT - Exception 20, calling a missing (weak) function (null pointer function)."));
       out.println(F("  0    - Hardware WDT - a hard coded compiler breakpoint from a compile time detected divide by zero"));
       // out.println(F("  1    - Hardware WDT - a hard coded compiler breakpoint from a compile time detected divide by zero with INTLEVEL 2"));
-      out.println(F("  1    - Ignored BP - a hard coded compiler breakpoint from a compile time detected divide by zero with INTLEVEL 2"));
+      out.println(F("  1    - Ignored BP   - a hard coded compiler breakpoint from a compile time detected divide by zero with INTLEVEL 2"));
       out.println(F("  6    - Exception 9  - Unaligned Load or Store operation"));
       out.println(F("  7    - Exception 28 - Load data using a null pointer while at INTLEVEL 2."));
       out.println(F("  8    - Exception 28 - Load data using a null pointer."));

@@ -27,6 +27,8 @@
 
 abendHandlerInstall	KEYWORD2
 abendInfoReport	KEYWORD2
+abendIsHeapOK KEYWORD2
+SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO	KEYWORD2
 
 #######################################
 # Constants (LITERAL1)

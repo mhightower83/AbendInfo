@@ -16,13 +16,44 @@
 #ifndef ABENDINFO_H_
 #define ABENDINFO_H_
 
-#ifndef OPTION_ABENDINFO
-#define OPTION_ABENDINFO 1
+#ifndef ABENDINFO_OPTION
+#define ABENDINFO_OPTION 1
 #endif
 
-#if OPTION_ABENDINFO
-#ifndef OPTION_REPLACE_ALL_DEFAULT_EXC_HANDLERS
-#define OPTION_REPLACE_ALL_DEFAULT_EXC_HANDLERS 1
+#if ABENDINFO_OPTION
+
+#ifndef ABENDINFO_REPLACE_ALL_DEFAULT_EXC_HANDLERS
+#define ABENDINFO_REPLACE_ALL_DEFAULT_EXC_HANDLERS 1
+#endif
+
+// Adds additional printing of our discoveries after the Postmortem report.
+// Set to zero for a very small reduction in code.
+#ifndef ABENDINFO_POSTMORTEM_EXTRA
+#define ABENDINFO_POSTMORTEM_EXTRA 1
+#endif
+
+#ifndef ABENDINFO_IDENTIFY_SDK_PANIC
+#define ABENDINFO_IDENTIFY_SDK_PANIC 1
+#if !defined(ABENDINFO_GASP_SIZE)
+#define ABENDINFO_GASP_SIZE 64
+#endif
+
+#else
+#define ABENDINFO_IDENTIFY_SDK_PANIC 0
+#undef ABENDINFO_GASP_SIZE
+#define ABENDINFO_GASP_SIZE 0
+#endif
+
+// #if !defined(ABENDINFO_GASP_SIZE)
+// #define ABENDINFO_GASP_SIZE 64
+// #endif
+
+#ifndef ABENDINFO_HEAP_MONITOR
+#ifdef UMM_STATS_FULL
+#define ABENDINFO_HEAP_MONITOR 1
+#else
+#define ABENDINFO_HEAP_MONITOR 0
+#endif
 #endif
 
 /*
@@ -35,26 +66,56 @@
 #ifndef SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO
 #define SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO custom_crash_callback
 #endif
+extern "C" void SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);
+
 
 struct AbendInfo {
-    uint32_t epc1;  // Needs to be first for ASM to work
     uint32_t reason;
     uint32_t exccause;
-    // uint32_t crc;  // maybe TODO
+    uint32_t oom;
+#if ABENDINFO_HEAP_MONITOR
+    size_t heap;
+    size_t heap_min;
+    size_t low_count;
+    uint32_t last;
+#endif
+    uint32_t epc1;
+#if ABENDINFO_IDENTIFY_SDK_PANIC
+    uint32_t intlevel;
+    size_t   idx;
+    char     gasp[ABENDINFO_GASP_SIZE];  // Buffer last ets_printf message - last gasp
+#endif
+    uint32_t crc;   // Must be last element
 };
 extern AbendInfo abendInfo;
 extern AbendInfo resetAbendInfo;
+extern "C" void abendHandlerInstall(void);
+void abendInfoHeapReport(Print& sio, const char *qualifier="", AbendInfo& info=abendInfo);
 
-void abendHandlerInstall(void);
-void abendInfoReport(Print& sio);
-// extern "C" void abendEvalCrash(struct rst_info *rst_info);
+#else  // ABENDINFO_OPTION
+#undef ABENDINFO_REPLACE_ALL_DEFAULT_EXC_HANDLERS
+#define ABENDINFO_REPLACE_ALL_DEFAULT_EXC_HANDLERS 0
 
-#else
-#undef OPTION_REPLACE_ALL_DEFAULT_EXC_HANDLERS
-#define OPTION_REPLACE_ALL_DEFAULT_EXC_HANDLERS 0
+#undef ABENDINFO_POSTMORTEM_EXTRA
+#define ABENDINFO_POSTMORTEM_EXTRA 0
 
+#undef ABENDINFO_HEAP_MONITOR
+#define ABENDINFO_HEAP_MONITOR 0
+
+#undef SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO
+#define SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO(...);
+
+#define abendInfoHeapReport(...)
 static inline void abendHandlerInstall(void) {}
-void abendInfoReport(Print& sio);
+#endif   // ABENDINFO_OPTION
+
+#if ABENDINFO_HEAP_MONITOR
+bool abendIsHeapOK(void);
+#else
+static inline bool abendIsHeapOK(void) { return true; }
 #endif
 
-#endif
+// A reduced report is made available
+void abendInfoReport(Print& sio);
+
+#endif   // #ifndef ABENDINFO_H_

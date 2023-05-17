@@ -39,6 +39,7 @@ void setup(void) {
 
 
 void loop(void) {
+  abendIsHeapOK();        // optional
   if (Serial.available() > 0) {
     int hotKey = Serial.read();
     processKey(Serial, hotKey);
