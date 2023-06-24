@@ -64,6 +64,9 @@ void loop(void) {
       panic();
   }
   if (! abendIsNetworkOK()) {
+      if (!WiFi.localIP().isSet()) {
+          Serial.printf_P(PSTR("\nLost IP Address\n"));
+      }
       panic();
   }
 
@@ -83,7 +86,7 @@ void loop(void) {
 #endif
 
 extern "C" void preinit (void) {
-    abendHandlerInstall();  // Moved to ProcessKey.cpp for testing
+    abendHandlerInstall(true);  // Moved to ProcessKey.cpp for testing
     SHARE_PREINIT__DEBUG_ESP_BACKTRACELOG();
 }
 

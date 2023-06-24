@@ -21,7 +21,7 @@ void setup(void) {
   // Install BP handler and replace Unhandled Exception handling. And updates
   // Arduino's copy of rst_info with corrected/missed details.
   // As an alternative, this call could be moved into `preinit()`.
-  // abendHandlerInstall();
+  // abendHandlerInstall(true);
 
   Serial.begin(115200);
   delay(200);    // This delay helps when using the 'Modified Serial monitor' otherwise it is not needed.
@@ -56,7 +56,7 @@ void loop(void) {
 #endif
 
 extern "C" void preinit (void) {
-    abendHandlerInstall();
+    abendHandlerInstall(true);
     SHARE_PREINIT__DEBUG_ESP_BACKTRACELOG();
 }
 

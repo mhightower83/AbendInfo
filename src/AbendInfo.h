@@ -70,6 +70,7 @@ extern "C" void SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO(struct rst_info * rst
 
 
 struct AbendInfo {
+    time_t uptime;
     uint32_t reason;
     uint32_t exccause;
     uint32_t oom;
@@ -89,7 +90,7 @@ struct AbendInfo {
 };
 extern AbendInfo abendInfo;
 extern AbendInfo resetAbendInfo;
-extern "C" void abendHandlerInstall(void);
+extern "C" void abendHandlerInstall(bool update=false);
 void abendInfoHeapReport(Print& sio, const char *qualifier="", AbendInfo& info=abendInfo);
 
 #else  // ABENDINFO_OPTION
@@ -106,7 +107,7 @@ void abendInfoHeapReport(Print& sio, const char *qualifier="", AbendInfo& info=a
 #define SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO(...);
 
 #define abendInfoHeapReport(...)
-static inline void abendHandlerInstall(void) {}
+static inline void abendHandlerInstall([[maybe_unused]] bool update=false; ) {}
 #endif   // ABENDINFO_OPTION
 
 #if ABENDINFO_HEAP_MONITOR
@@ -116,6 +117,6 @@ static inline bool abendIsHeapOK(void) { return true; }
 #endif
 
 // A reduced report is made available
-void abendInfoReport(Print& sio);
+void abendInfoReport(Print& sio, bool heap=true);
 
 #endif   // #ifndef ABENDINFO_H_

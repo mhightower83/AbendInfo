@@ -106,13 +106,13 @@ enum rst_reason_sw {
 #if ABENDINFO_IDENTIFY_SDK_PANIC
 
 #if ABENDINFO_HEAP_MONITOR
-#define ABENDINFO_EPC1     28
-#define ABENDINFO_INTLEVEL 32
-#define ABENDINFO_IDX      36
+#define ABENDINFO_EPC1     36
+#define ABENDINFO_INTLEVEL 40
+#define ABENDINFO_IDX      44
 #else
-#define ABENDINFO_EPC1     12
-#define ABENDINFO_INTLEVEL 16
-#define ABENDINFO_IDX      20
+#define ABENDINFO_EPC1     20
+#define ABENDINFO_INTLEVEL 24
+#define ABENDINFO_IDX      28
 #endif
 
 static_assert(offsetof(AbendInfo, intlevel) == ABENDINFO_INTLEVEL);
@@ -234,6 +234,7 @@ extern void SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDINFO(
 {
     (void)stack;
     (void)stack_end;
+    abendInfo.uptime = (time_t)(micros64() / 1000000);
     SHOW_PRINTF("\nAbendInfo:\n");
     if (rst_info->reason == REASON_EXCEPTION_RST) {
         if (20u /* EXCCAUSE_INSTR_PROHIBITED */ == rst_info->exccause &&
@@ -365,7 +366,10 @@ static void install_unhandled_exception_handler(void) {
 
 
 // call from setup() or preinit()
-extern "C" void abendHandlerInstall(void) {
+/*
+  update - Patch Arduino's copy of rst_info
+*/
+extern "C" void abendHandlerInstall(bool update) {
     const size_t new_debug_vector_sz  = ALIGN_UP((uintptr_t)&new_debug_vector_last - (uintptr_t)new_debug_vector, 4);
 
     if (! gdb_present()) {
@@ -416,13 +420,13 @@ extern "C" void abendHandlerInstall(void) {
         //   REASON_DEFAULT_RST
         resetAbendInfo = abendInfo;
     } else
-    if ((REASON_SOFT_WDT_RST  == reason ||
+    if (abendOK &&
+        (REASON_SOFT_WDT_RST  == reason ||
          REASON_EXCEPTION_RST == reason ||
-         REASON_WDT_RST       == reason) &&
-        abendOK)
-    {
+         REASON_WDT_RST       == reason) ) {
+
         resetAbendInfo = abendInfo;
-        if (resetAbendInfo.epc1) {
+        if (resetAbendInfo.epc1 && update) {
             // Patch Arduino's copy of rst_info
             resetInfo.epc1     = resetAbendInfo.epc1;
             resetInfo.reason   = resetAbendInfo.reason;
@@ -455,9 +459,25 @@ void abendInfoHeapReport(Print& sio, const char *qualifier, AbendInfo& info) {
 }
 #endif //#if ABENDINFO_OPTION
 
+static void printTime(Print& sio, PGM_P label, time_t time) {
+    char buf[64];
+    struct tm *tv = gmtime(&time);
+    if (strftime(buf, sizeof(buf), "%T", tv) > 0) {
+        sio.printf_P(PSTR("%-23S "), label);
+        if (tv->tm_yday)
+            sio.printf_P(PSTR("%d day%s"), tv->tm_yday, (tv->tm_yday == 1) ? " " : "s ");
 
-void abendInfoReport(Print& sio) {
+        sio.printf_P(PSTR("%s\r\n  "), buf);
+    }
+
+}
+void abendInfoReport(Print& sio, bool heap) {
     sio.printf_P(PSTR("\nRestart Report:\n  "));
+    if (resetAbendInfo.uptime) {
+        printTime(sio, PSTR("Uptime: "), resetAbendInfo.uptime);
+        printTime(sio, PSTR("Time since restart: "), (time_t)(micros64() / 1000000));
+    }
+
     [[maybe_unused]] struct rst_info *info = ESP.getResetInfoPtr();
     sio.println(ESP.getResetInfo());
 
@@ -504,7 +524,7 @@ void abendInfoReport(Print& sio) {
     }
 
 #if ABENDINFO_OPTION > 0
-    abendInfoHeapReport(sio, "Restart ", resetAbendInfo);
+    if (heap) abendInfoHeapReport(sio, "Restart ", resetAbendInfo);
 #endif
 }
 

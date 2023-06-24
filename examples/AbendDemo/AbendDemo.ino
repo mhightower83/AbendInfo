@@ -13,7 +13,7 @@ void processKey(Print& out, int hotKey);
 
 void setup(void) {
   // Patch some common unhandled exception which lead to WDT resets.
-  abendHandlerInstall();
+  abendHandlerInstall(true);
 
   Serial.begin(115200);
   delay(200);    // This delay helps when using the 'Modified Serial monitor' otherwise it is not needed.
