@@ -4,6 +4,7 @@ Current status: working - (in the future may have breaking changes)
 ## Goals
 1. I want to be able to differentiate SDK Crashes from mine. As it now stands that is not possible. The SDK has a nasty way of handling unrecoverable events, it fails with a Software or Hardware WDT Reset.
 2. I need to detect that the WiFi interface is hung and not sending and/or receiving packets.
+   * WIP, Network Health Monitor component.
 3. Extend new detected crash information forward to the next boot cycle.
 
 
@@ -20,6 +21,7 @@ Intercept some crash events that result in Hardware or Software WDT Resets. Cach
      resets. For this case, install a mini BP handler that redirects to the
      Exception 0 handler. Letting the SDK's exception process make the BP
      known. Register epc2 holds the address of the BP instruction.
+  4. Network Health Monitor component requires library [AsyncPing](https://github.com/akaJes/AsyncPing).
 
 ## Details
 Some default exception events are only announced if you are running `gdb`. In the absence of `gdb`, they are seen as Hardware WDT Reset or Software WDT Reset. To gain access to a stack trace when `gdb` is not installed, this library installs handlers that convert those events to an `ill` instruction, EXCCAUSE 0, crash. Look at the stack trace before the `ill` instruction was encountered.
@@ -66,6 +68,9 @@ Somthing like this in the library's `.h` file sets a default define to `custom_c
 The main library's `custom_crash_callback` function name is changed to `SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_SOME_LIBRARY`. By using global defines we can then easily rename a library's `custom_crash_callback` function to be unique. With all the libraries `custom_crash_callback` functions with unique names, you construct a new inclusive `custom_crash_callback` function in your Sketch and call all the unique callback functions from within. Ideally calling them by their macro names.
 
 ## Build Customization Options
+For the Arduino IDE build platform, all options listed can go in your [`<sketch name>.ino.globals.h`](https://arduino-esp8266.readthedocs.io/en/latest/faq/a06-global-build-options.html?highlight=build.opt#how-to-specify-global-build-defines-and-options) file.
+Otherwise, use the method appropriate for your build platform of choice.
+
 Options `ABENDINFO_POSTMORTEM_EXTRA`, `ABENDINFO_IDENTIFY_SDK_PANIC`, and  `ABENDINFO_REPLACE_ALL_DEFAULT_EXC_HANDLERS` are on by default.
  To become available, option `ABENDINFO_HEAP_MONITOR` requires `-DUMM_STATS_FULL=1`.
 

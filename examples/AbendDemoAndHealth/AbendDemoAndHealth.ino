@@ -1,4 +1,6 @@
 /*
+  WIP
+
    AbendDemoAndHealth.ino - An example to generate some of the various ways a
    sketch could crash and show case the AbendInfo library and the BacktraceLog
    libraries sharing `custom_crash_callback`. Expanded to include Network
@@ -6,6 +8,19 @@
 
    For how to use, see calls to `abendHandlerInstall()` and `abendInfoReport()`
    in `setup()` and `custom_crash_callback(...)` definition.
+
+Log:
+   Using the AbendNetworkHealth component of this library with a problematic
+   Sketch has shown that there are times when ping stops working. After 20
+   minutes a restart occurs, during that 20 minute period the Sketch did not
+   respond to web access. The restarts have occured in up to 4 days. The orignal
+   problem of not responding commonly occured around 2 weeks. I suspect in the
+   case of using AbendNetworkHealth, if we wait longer than 20 minutes, it would
+   have continued to work.
+
+   TODO: Use etharp_request instead of ping and check for empty ARP cache.
+
+
 */
 #include <Arduino.h>
 #include <ESP8266WiFi.h>

@@ -22,6 +22,12 @@
  * Additional library required:
  *   * https://github.com/akaJes/AsyncPing.git
  *
+ * TODO: (maybe)
+ *   This method would generate the least amount of Network traffic and is not
+ *   dependent on a target responding to pings.
+ *   Look at using `etharp_get_entry()` to scan the ARP table (0 - ARP_TABLE_SIZE) for entries.
+ *   When zero entries, use `etharp_request()` to send a request to the default router
+ *   Count the number of consecutive times ARP table is empty. After n, generate error event.
  */
 #include "Arduino.h"
 #include <ESP8266WiFi.h>
@@ -29,6 +35,10 @@
 
 #include <AsyncPing.h>
 #include "AbendNetworkHealth.h"
+
+extern "C" {
+  #include <lwip/sys.h>
+}
 
 #pragma GCC optimize("Os")
 
@@ -48,6 +58,38 @@ extern "C" int umm_info_safe_printf_P(const char *fmt, ...) __attribute__((forma
 #else
 #define SHOW_PRINTF(fmt, ...)
 #endif
+
+/*
+  int etharp_get_entry(
+    size_t i,
+    ip4_addr_t**ipaddr,
+    struct netif** netif,
+    struct eth_addr ** eth_ret
+  );
+  Parameters
+      i       entry number, 0 to ARP_TABLE_SIZE
+      ipaddr  return value: IP address
+      netif   return value: points to interface
+      eth_ret	return value: ETH address
+  Returns
+      1   on valid index,
+      0   otherwise
+*/
+size_t etharpGetCount(void) {
+    // etharp_get_entry()` to scan the ARP table (0 - ARP_TABLE_SIZE) for entries.
+    [[maybe_unused]] ip4_addr_t      *ipaddr;
+    [[maybe_unused]] struct netif    *netif;
+    [[maybe_unused]] struct eth_addr *eth_ret;
+
+    size_t count = 0;
+    for (size_t i = 0; i < ARP_TABLE_SIZE; i++) {
+        // etharp_get_entry() => https://www.nongnu.org/lwip/2_1_x/lwip_2etharp_8h.html#ab93df7ccb26496100d45137541e863c8
+        if (etharp_get_entry(i, &ipaddr, &netif, &eth_ret)) {
+            count++;
+        }
+    }
+    return count;
+}
 
 
 /*
@@ -126,7 +168,10 @@ bool abendIsNetworkOK(void) {
     }
 
     if (netmon.up && (now - netmon.last_ok) > kTimeout_Restart) {
-        netmon.restart = true;
+        // Before rebooting, confirm the Network interface's hung state by
+        // waiting until all ARP cache entries have expired.
+        // LWIP build defaults ARP entry timeout at 5 minutes.
+        netmon.restart = (0 == etharpGetCount());
     }
 
     return !netmon.restart;

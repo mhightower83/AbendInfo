@@ -4,6 +4,10 @@
 #include <AbendInfo.h>
 #include <AbendNetworkHealth.h>
 
+extern "C" {
+  #include <lwip/sys.h>
+}
+
 #ifndef DEBUG_ESP_BACKTRACELOG_LEAF_FUNCTION
 #define DEBUG_ESP_BACKTRACELOG_LEAF_FUNCTION(...) __asm__ __volatile__("" ::: "a0", "memory")
 #endif
@@ -13,6 +17,7 @@ extern "C" _xtos_handler _xtos_exc_handler_table[];
 
 void showNetworkHealth(Print& sio);
 
+size_t etharpGetCount();
 
 void crashMeIfYouCan(void)__attribute__((weak));
 int __attribute__((noinline)) divideA_B(int a, int b);
@@ -70,11 +75,15 @@ void alloca_handler(
 //
 void processKey(Print& out, int hotKey) {
   switch (hotKey) {
+    case 'e':
+      out.printf_P(PSTR("ARP_TABLE_SIZE:  %u\r\n"), ARP_TABLE_SIZE);
+      out.printf_P(PSTR("ARP table count: %u\r\n"), etharpGetCount());
+      break;
     case 'v':
       out.println(F("Print Exception Table Vectors"));
       printCauseTable();
-      out.printf(PSTR("\nputc1: %08x\n"), *(uint32_t*)0x3fffdd48u);
-      out.printf(PSTR("\nputc2: %08x\n"), *(uint32_t*)0x3fffdd4cu);
+      out.printf_P(PSTR("\nputc1: %08x\n"), *(uint32_t*)0x3fffdd48u);
+      out.printf_P(PSTR("\nputc2: %08x\n"), *(uint32_t*)0x3fffdd4cu);
       break;
     // case 'u':
     //   out.println(F("Patch Exception 20 handler using Exception 0 handler"));
@@ -296,6 +305,7 @@ void processKey(Print& out, int hotKey) {
       out.println();
       out.println(F("Press a key + <enter>"));
       out.println(F("  v    - Print Exception Table Vectors"));
+      out.println(F("  e    - Print active etharp count"));
       out.println(F("  o    - Bump Heap OOM counter"));
       out.println(F("  m    - Show Abend Report and Health Monitor status"));
       // out.println(F("  u    - Install Exception 20 patch"));
