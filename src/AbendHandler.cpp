@@ -197,6 +197,8 @@ asm(
     "extui        a12,    a12,    0,     4\n\t"
     "s32i         a0,     a5,     " QUOTE( ABENDINFO_EPC1 ) "\n\t"
     "s32i         a12,    a5,     " QUOTE( ABENDINFO_INTLEVEL ) "\n\t"
+    "movi         a2,     0\n\t"
+    "call0        ets_install_putc2\n\t"
 "ets_printf_sdk_panic:\n\t" // Add self explaining label for addr2line to display
     "ill\n\t"
     "\n"
@@ -444,7 +446,7 @@ extern "C" void abendHandlerInstall(bool update) {
 
 void abendInfoHeapReport(Print& sio, const char *qualifier, AbendInfo& info) {
 #if ABENDINFO_HEAP_MONITOR
-    sio.printf_P(PSTR("\r\n%sHeap Report:\r\n"), qualifier);
+    sio.printf_P(PSTR("\r\n%sDRAM Heap Report:\r\n"), qualifier);
     sio.printf_P(PSTR("  %-23S %5u\r\n"), PSTR("OOM count:"), info.oom);
     sio.printf_P(PSTR("  %-23S %5u\r\n"), PSTR("low mark:"), info.heap_min);
     sio.printf_P(PSTR("  %-23S %5u\r\n"), PSTR("free at test interval:"), info.heap);
@@ -453,7 +455,7 @@ void abendInfoHeapReport(Print& sio, const char *qualifier, AbendInfo& info) {
     }
 #elif ABENDINFO_OPTION
     if (info.oom) {
-        sio.printf_P(PSTR("  Heap OOM count: %u\r\n"), info.oom);
+        sio.printf_P(PSTR("  DRAM Heap OOM count: %u\r\n"), info.oom);
     }
 #endif
 }
@@ -706,6 +708,8 @@ asm(
     "ret\n\t"
     "\n"
 "ets_printf_ill:\n\t"
+    "movi         a2,     0\n\t"
+    "call0        ets_install_putc2\n\t"
     "ill\n\t"
   ".size ets_printf, .-ets_printf\n\t"
 );

@@ -1,6 +1,7 @@
 #ifndef EXCEPTION20_INO_GLOBALS_H
 #define EXCEPTION20_INO_GLOBALS_H
 
+
 /*@create-file:build.opt@
 
 -include "/home/mhightow/Arduino/include/ide_globals.h"
@@ -44,6 +45,8 @@
 
 
 // -DABENDINFO_IDENTIFY_SDK_PANIC=0
+
+-DABENDINFO_DEBUG=1
 */
 
 /*@create-file:build.opt:debug@
@@ -52,7 +55,7 @@
 // Or move contents to the block with the signature "@create-file:build.opt@"
 
 
-
+-DABENDINFO_DEBUG=1
 */
 
 #if defined(__cplusplus)
