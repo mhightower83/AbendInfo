@@ -47,5 +47,6 @@ extern "C" void SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDNETORKHEALTH(struct rst_in
 bool abendIsNetworkOK(void);
 void abendShowNetworkHealth(Print& sio);
 void abendEnableNetworkMonitor(bool enable);
+size_t abendGetArpCount(void);
 
 #endif // ABENDSYSTEMHEALTH_H

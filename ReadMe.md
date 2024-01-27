@@ -21,7 +21,10 @@ Intercept some crash events that result in Hardware or Software WDT Resets. Cach
      resets. For this case, install a mini BP handler that redirects to the
      Exception 0 handler. Letting the SDK's exception process make the BP
      known. Register epc2 holds the address of the BP instruction.
-  4. Network Health Monitor component requires library [AsyncPing](https://github.com/akaJes/AsyncPing).
+  4. WIP - Network Health Monitor component - Now checks if we can receive
+     packets, by sending ARPs to the gateway and looks at the size of the ARP table. Also verifies we still have a local IP Address. A failure is assumed after
+     20 minutes and an empty ARP table. Uses an unstructured method to gain
+     access to lwIP's ARP table.
 
 ## Details
 Some default exception events are only announced if you are running `gdb`. In the absence of `gdb`, they are seen as Hardware WDT Reset or Software WDT Reset. To gain access to a stack trace when `gdb` is not installed, this library installs handlers that convert those events to an `ill` instruction, EXCCAUSE 0, crash. Look at the stack trace before the `ill` instruction was encountered.
