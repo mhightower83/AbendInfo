@@ -29,12 +29,25 @@
 #include "AbendInfo.h"
 #include <lwip/err.h>
 
-#if !defined(ABENDINFO_NETWORK_MONITOR) && ABENDINFO_HEAP_MONITOR
+
+#if !defined(ABENDINFO_NETWORK_MONITOR) && defined(SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDNETORKHEALTH)
 #define ABENDINFO_NETWORK_MONITOR 1
+#else
+/*
+  Because AbendInfo.h and AbendNetworkHealth.h are in the same directory when
+  AbendInfo.h is included in a Sketch, AbendNetworkHealth.cpp will also be
+  built. To prevent build errors, we need to block building AbendNetworkHealth.
+*/
+#define ABENDINFO_NETWORK_MONITOR 0
 #endif
 
 #if ABENDINFO_NETWORK_MONITOR
 #ifndef SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDNETORKHEALTH
+/*
+  This will create a linker conflict with duplicate custom_crash_callback.
+  You must create a custom_crash_callback() in your Sketch to hold shared Abend
+  and AbendNetworkHealth custom crash callbacks see examples.
+*/
 #define SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDNETORKHEALTH custom_crash_callback
 #endif
 extern "C" void SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDNETORKHEALTH(struct rst_info * rst_info, uint32_t stack, uint32_t stack_end);

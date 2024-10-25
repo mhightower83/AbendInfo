@@ -17,7 +17,42 @@ extern "C" _xtos_handler _xtos_exc_handler_table[];
 
 void showNetworkHealth(Print& sio);
 
-size_t etharpGetCount();
+///////////////////////////////////////////////////////////////////////////////
+//  TODO: move to AbendMisc.cpp as size_t abendGetArpCount(void);
+/*
+  Function in lwip library
+
+      int etharp_get_entry(
+        size_t i,
+        ip4_addr_t**ipaddr,
+        struct netif** netif,
+        struct eth_addr ** eth_ret
+      );
+      Parameters
+          i       entry number, 0 to ARP_TABLE_SIZE
+          ipaddr  return value: IP address
+          netif   return value: points to interface
+          eth_ret	return value: ETH address
+      Returns
+          1   on valid index,
+          0   otherwise
+*/
+#include <lwip/etharp.h>
+size_t etharpGetCount() {
+    // etharp_get_entry()` to scan the ARP table (0 - ARP_TABLE_SIZE) for entries.
+    [[maybe_unused]] ip4_addr_t      *ipaddr;
+    [[maybe_unused]] struct netif    *netif;
+    [[maybe_unused]] struct eth_addr *eth_ret;
+
+    size_t count = 0;
+    for (size_t i = 0; i < ARP_TABLE_SIZE; i++) {
+        // etharp_get_entry() => https://www.nongnu.org/lwip/2_1_x/lwip_2etharp_8h.html#ab93df7ccb26496100d45137541e863c8
+        if (etharp_get_entry(i, &ipaddr, &netif, &eth_ret)) {
+            count++;
+        }
+    }
+    return count;
+}
 
 void crashMeIfYouCan(void)__attribute__((weak));
 int __attribute__((noinline)) divideA_B(int a, int b);

@@ -118,6 +118,7 @@ extern "C" {
 ////////////////////////////////////////////////////////////////////////////////
 //
 #if ABENDINFO_NETWORK_MONITOR
+
 #ifndef QUOTE
 #define QUOTE(a) __STRINGIFY(a)
 #endif

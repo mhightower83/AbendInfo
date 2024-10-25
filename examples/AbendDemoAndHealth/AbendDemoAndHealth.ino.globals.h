@@ -1,6 +1,5 @@
-#ifndef EXCEPTION20_INO_GLOBALS_H
-#define EXCEPTION20_INO_GLOBALS_H
-
+#ifndef ABENDDEMOANDHEALTH_INO_GLOBALS_H
+#define ABENDDEMOANDHEALTH_INO_GLOBALS_H
 
 /*@create-file:build.opt@
 
@@ -68,4 +67,5 @@
 #if defined(__ASSEMBLER__)
 // Defines kept private to assembler modules
 #endif
+
 #endif
