@@ -10,6 +10,7 @@ Current status: working - (in the future may have breaking changes)
 
 ## Overview
 Intercept some crash events that result in Hardware or Software WDT Resets. Cache the results in no-init DRAM for later display on request after reboot. By leveraging the SDK's General Exception handler, we can force a Postmortem crash dump and allow `custom_crash_callback` supporting libraries like [EspSaveCrash](https://github.com/krzychb/EspSaveCrash) or [BacktraceLog](https://github.com/mhightower83/BacktraceLog) to run.
+* **TODO: I think I forgot to do this.** I need to do a PR for EspSaveCrash or document changes that facilitate the sharing of `custom_crash_callback`. Add an example to use it.
 
 #### Summary:
   1. Monitor for possible Deliberate Infinite Loops, immediately
@@ -21,10 +22,17 @@ Intercept some crash events that result in Hardware or Software WDT Resets. Cach
      resets. For this case, install a mini BP handler that redirects to the
      Exception 0 handler. Letting the SDK's exception process make the BP
      known. Register epc2 holds the address of the BP instruction.
-  4. WIP - Network Health Monitor component - Now checks if we can receive
-     packets, by sending ARPs to the gateway and looks at the size of the ARP table. Also verifies we still have a local IP Address. A failure is assumed after
-     20 minutes and an empty ARP table. Uses an unstructured method to gain
-     access to lwIP's ARP table.
+  4. WIP - Network Health Monitor component - The goal for this extension was
+     to get a handle on why the WiFi stops working. So far no success.
+     (My suspension is a hardware design flaw, resulting in a WiFi hang, which
+     would not be unusual for a complex network chip. Without an errata sheet,
+     we will never know. And, if we had access to one, we could never speak of
+     it because of NDAs.)
+     * Now checks if we can receive packets, by sending ARPs to the gateway and
+     looks at the size of the ARP table. Also verifies we still have a local IP
+     Address. A failure is assumed after 20 minutes and an empty ARP table. Uses
+     an unstructured method to gain access to lwIP's ARP table.
+     Also added, logic to monitor WiFi Buffer Pools.
 
 ## Details
 Some default exception events are only announced if you are running `gdb`. In the absence of `gdb`, they are seen as Hardware WDT Reset or Software WDT Reset. To gain access to a stack trace when `gdb` is not installed, this library installs handlers that convert those events to an `ill` instruction, EXCCAUSE 0, crash. Look at the stack trace before the `ill` instruction was encountered.

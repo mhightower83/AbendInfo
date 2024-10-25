@@ -27,6 +27,7 @@
 #define ABENDSYSTEMHEALTH_H
 
 #include "AbendInfo.h"
+#include <lwip/err.h>
 
 #if !defined(ABENDINFO_NETWORK_MONITOR) && ABENDINFO_HEAP_MONITOR
 #define ABENDINFO_NETWORK_MONITOR 1
@@ -43,10 +44,14 @@ extern "C" void SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDNETORKHEALTH(struct rst_in
 #define SHARE_CUSTOM_CRASH_CB__DEBUG_ESP_ABENDNETORKHEALTH(...);
 #endif
 
-
+err_t abendCheckNetwork(void);
 bool abendIsNetworkOK(void);
 void abendShowNetworkHealth(Print& sio);
 void abendEnableNetworkMonitor(bool enable);
-size_t abendGetArpCount(void);
+// size_t abendGetArpCount(void);
+
+void reportEbCxt(Print& sio);
+void report_ebCxt(void);
+// bool getnL32rValue(uintptr_t pf, int skip, void **literalValue, bool debug=false);
 
 #endif // ABENDSYSTEMHEALTH_H

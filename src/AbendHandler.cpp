@@ -412,8 +412,6 @@ extern "C" void abendHandlerInstall(bool update) {
     // init abendInfo for the new boot cycle
     const uint32_t reason = ESP.getResetInfoPtr()->reason;
     bool abendOK = (abendInfo.crc == crc32(&abendInfo, offsetof(struct AbendInfo, crc)));
-    //D REASON_DEEP_SLEEP_AWAKE > reason &&
-    //D REASON_DEFAULT_RST      < reason &&
     if (abendOK && (REASON_SOFT_RESTART == reason || 100u < abendInfo.reason)) {
         // Added Software Exceptions eg. panic()
         // Don't expect to have valid data after these:
